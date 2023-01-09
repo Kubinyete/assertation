@@ -16,5 +16,4 @@ $data = Assert::value($data)->applyAssocRules([
     'ipaddress' => 'null|or|ipv4'
 ]);
 
-
 dd($data->get());

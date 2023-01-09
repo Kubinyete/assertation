@@ -28,13 +28,21 @@ class LangTranslator extends BaseTranslator
         throw new UnexpectedValueException("Provided language $lang is not yet supported.");
     }
 
-    protected function tr(string $message): string
+    protected function tr(string $message): ?string
     {
-        return $this->table[$message] ?? $message;
+        return $this->table[$message] ?? null;
     }
 
     public function translate(string $message, array $context = []): string
     {
-        return parent::translate($this->tr($message), $context);
+        $messageFromTable = $this->tr($message);
+
+        if ($messageFromTable) {
+            return parent::translate($messageFromTable, $context);
+        }
+
+        // @NOTE: 
+        // Prevents any string interpolation for non-indified messages.
+        return $message;
     }
 }
