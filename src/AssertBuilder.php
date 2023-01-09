@@ -67,11 +67,9 @@ class AssertBuilder
         return $this->sensitive;
     }
 
-    //
-
-    public function or(): static
+    public function expressionGet()
     {
-        return $this->clone($this->getOriginal(), $this, null, null, false);
+        return $this->value;
     }
 
     public function expressionChecks(): array
@@ -118,12 +116,12 @@ class AssertBuilder
 
     public function get()
     {
-        return $this->value;
+        return !$this->expressionHasErrors() ? $this->expressionGet() : ($this->parent ? $this->parent->get() : null);
     }
 
     public function getOriginal()
     {
-        return $this->parent ? $this->parent->getOriginal() : $this->get();
+        return $this->parent ? $this->parent->getOriginal() : $this->expressionGet();
     }
 
     public function validate()
@@ -140,6 +138,10 @@ class AssertBuilder
 
     //
 
+    public function or(): static
+    {
+        return $this->clone($this->getOriginal(), $this, null, null, false);
+    }
 
     public function assert($cond, ?string $message, string $ruleName, array $additionalContext = []): static
     {
@@ -349,18 +351,25 @@ class AssertBuilder
         return $this->assert(array_search($this->value, $countries) !== false, __FUNCTION__, __FUNCTION__);
     }
 
+    public function decimal(): static
+    {
+        return $this->pattern('/^[0-9]*(\.[0-9]+)?$/', __FUNCTION__);
+    }
+
     // @NOTE:
     // Modifiers
 
-    public function asCpf(bool $format = false): static
+    public function asCpf(bool $format = true): static
     {
         $raw = preg_replace('/[^0-9]/', '', strval($this->value));
         $raw = str_pad($raw, 11, '0', STR_PAD_LEFT);
-        $this->assert(strlen($raw), __FUNCTION__, __FUNCTION__);
+
+        if (strlen($raw) != 11) return $this->assert(false, __FUNCTION__, __FUNCTION__);
 
         $split = str_split($raw);
         $initial = $split[0];
-        $this->assert(array_reduce($split, fn ($prev, $curr) => $curr != $initial ? $curr : $prev, $initial) != $initial, __FUNCTION__, __FUNCTION__);
+
+        if (array_reduce($split, fn ($prev, $curr) => $curr != $initial ? $curr : $prev, $initial) == $initial) return $this->assert(false, __FUNCTION__, __FUNCTION__);
 
         for ($t = 9; $t < 11; $t++) {
             for ($d = 0, $c = 0; $c < $t; $c++) {
@@ -370,7 +379,7 @@ class AssertBuilder
             $d = ((10 * $d) % 11) % 10;
 
             if ($raw[$c] != $d) {
-                $this->assert(false, __FUNCTION__, __FUNCTION__);
+                return $this->assert(false, __FUNCTION__, __FUNCTION__);
             }
         }
 
@@ -382,15 +391,17 @@ class AssertBuilder
         return $this->clone($format ? "$p1.$p2.$p3-$p4" : $raw);
     }
 
-    public function asCnpj(bool $format = false): static
+    public function asCnpj(bool $format = true): static
     {
         $raw = preg_replace('/[^0-9]/', '', strval($this->value));
         $raw = str_pad($raw, 14, '0', STR_PAD_LEFT);
-        $this->assert(strlen($raw), __FUNCTION__, __FUNCTION__);
+
+        if (strlen($raw) != 14) return $this->assert(false, __FUNCTION__, __FUNCTION__);
 
         $split = str_split($raw);
         $initial = $split[0];
-        $this->assert(array_reduce($split, fn ($prev, $curr) => $curr != $initial ? $curr : $prev, $initial) != $initial, "CNPJ should not have all digits be equal to each other", __FUNCTION__);
+
+        if (array_reduce($split, fn ($prev, $curr) => $curr != $initial ? $curr : $prev, $initial) == $initial) return $this->assert(false, __FUNCTION__, __FUNCTION__);
 
         $j = 5;
         $k = 6;
@@ -414,7 +425,7 @@ class AssertBuilder
         $digito1 = $soma1 % 11 < 2 ? 0 : 11 - $soma1 % 11;
         $digito2 = $soma2 % 11 < 2 ? 0 : 11 - $soma2 % 11;
 
-        $this->assert((($raw[12] == $digito1) and ($raw[13] == $digito2)), __FUNCTION__, __FUNCTION__);
+        if (!(($raw[12] == $digito1) and ($raw[13] == $digito2))) return $this->assert(false, __FUNCTION__, __FUNCTION__);
 
         $p1 = substr($raw, 0, 2);
         $p2 = substr($raw, 2, 3);
@@ -443,10 +454,7 @@ class AssertBuilder
     public function asDecimal(array $decimalSymbol = [',', '.']): static
     {
         $data = str_replace($decimalSymbol, '.', strval($this->value));
-
-        $this->pattern('/^[0-9]+(\.[0-9]+)?$/', __FUNCTION__);
-
-        return $this->clone($data);
+        return $this->clone($data)->decimal();
     }
 
     public function asExtract(string $charClass): static

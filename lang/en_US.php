@@ -33,8 +33,8 @@ return [
     'alpha' => "Expected to only contain letters",
     'alphanumeric' => "Expected to only contain letter and digits",
     'currency' => "Expected to be a valid alpha3 currency code",
+    'decimal' => "Expected to be a decimal number",
 
-    'asDecimal' => "Expected to be a decimal number",
     'asCpf' => "Expected to be a valid CPF document number",
     'asCnpj' => "Expected to be a valid CNPJ document number",
 ];
