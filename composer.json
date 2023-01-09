@@ -1,0 +1,19 @@
+{
+    "name": "kubinyete/assertation",
+    "description": "Provides a Assert class that enables you to valide your data",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "Kubinyete\\Assertation\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Vitor Kubinyete",
+            "email": "vitorkubinyete@hotmail.com"
+        }
+    ],
+    "require-dev": {
+        "symfony/var-dumper": "^5.4"
+    }
+}
