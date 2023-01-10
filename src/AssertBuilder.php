@@ -362,7 +362,8 @@ class AssertBuilder
         return $this->pattern('/^[0-9]*(\.[0-9]+)?$/', __FUNCTION__);
     }
 
-    public function cardNumber() : static {
+    public function cardNumber(): static
+    {
         if (!is_numeric($this->value)) {
             return $this->assert(false, null, __FUNCTION__);
         }
@@ -450,11 +451,6 @@ class AssertBuilder
         return $this->clone($format ? "$p1.$p2.$p3/$p4-$p5" : $raw);
     }
 
-    public function asCardNumber(): static
-    {
-        return $this->asDigitsOnly()->assert(Luhn::check())
-    }
-
     public function asTrim(): static
     {
         return $this->clone(trim(strval($this->value)));
@@ -504,7 +500,7 @@ class AssertBuilder
         return $this->asTruncate($size, '');
     }
 
-    public function asCardNumber(int $size): static
+    public function asCardNumber(): static
     {
         return $this->asDigitsOnly()->cardNumber();
     }
