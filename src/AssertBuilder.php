@@ -319,7 +319,7 @@ class AssertBuilder
         return $this->assert(filter_var($this->value, FILTER_VALIDATE_URL), null, __FUNCTION__);
     }
 
-    protected function pattern(string $pattern, string $ruleNmae): static
+    protected function pattern(string $pattern, string $ruleName): static
     {
         return $this->assert(boolval(preg_match($pattern, $this->value)), null, $ruleName);
     }
