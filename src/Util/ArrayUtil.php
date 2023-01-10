@@ -6,7 +6,7 @@ abstract class ArrayUtil
 {
     public const SEPARATOR = '.';
 
-    public static function get(string $path, array $array, mixed $default = null): mixed
+    public static function get(string $path, array $array, $default = null)
     {
         $splitPath = explode(self::SEPARATOR, $path);
 
@@ -21,7 +21,7 @@ abstract class ArrayUtil
         return is_null($array) || !empty($splitPath) ? $default : $array;
     }
 
-    public static function set(string $path, array &$array, mixed $value = null): void
+    public static function set(string $path, array &$array, $value = null): void
     {
         $splitPath = explode(self::SEPARATOR, $path);
 

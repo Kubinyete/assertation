@@ -12,7 +12,7 @@ abstract class StringInterpolation
     public static function interpolate(
         string $string,
         array $values,
-        mixed $default = '',
+        $default = '',
         string $symbol = self::DEFAULT_SYMBOL_START,
         string $symbolEnd = self::DEFAULT_SYMBOL_END,
         string $escape = self::DEFAULT_ESCAPE,
