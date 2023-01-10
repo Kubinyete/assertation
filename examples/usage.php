@@ -4,9 +4,10 @@ use Kubinyete\Assertation\Assert;
 
 require_once implode(DIRECTORY_SEPARATOR, [__DIR__, '..', 'vendor', 'autoload.php']);
 
-$result = Assert::value('  test  ', 'meuatributo')->null()->or()->asUppercase()->asTrim()->equals('TEST')->or()->equals(1)->or()->applyRules('ipv4');
+$result = Assert::value(6, 'meuatributo')->null()->or()->asUppercase()->asTrim()->eq('TEST')->or()->eq(1)->or()->rules('string.lgt:5|integer.gt:5');
 
-$ok = $result->isValid();
+$ok = $result->valid();
 $errs = $result->errors();
+$data = $result->get();
 
-dd($ok, $errs);
+dd($ok, $errs, $data);

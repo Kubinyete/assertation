@@ -10,7 +10,7 @@ $data = [
     'ipaddress' => '192.168.1.1'
 ];
 
-$data = Assert::value($data)->applyAssocRules([
+$data = Assert::value($data)->assocRules([
     'name' => 'notNull|string|asTrim|asUppercase|lengthBetween:2,255',
     'age' => 'null|or|integer|greaterThan:18',
     'ipaddress' => 'null|or|ipv4'

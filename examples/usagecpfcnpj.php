@@ -6,7 +6,7 @@ require_once implode(DIRECTORY_SEPARATOR, [__DIR__, '..', 'vendor', 'autoload.ph
 
 $result = Assert::value('23,223', 'cpforcnpj')->asCpf()->or()->asCnpj()->or()->null()->or()->asDecimal();
 
-$ok = $result->isValid();
+$ok = $result->valid();
 $errs = $result->errors();
 $data = $result->get();
 
