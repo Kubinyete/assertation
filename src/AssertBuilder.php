@@ -5,6 +5,7 @@ namespace Kubinyete\Assertation;
 use DateTimeInterface;
 use Kubinyete\Assertation\Exception\ValidationException;
 use Kubinyete\Assertation\Util\ArrayUtil;
+use Kubinyete\Assertation\Util\Luhn;
 use UnexpectedValueException;
 
 class AssertBuilder
@@ -67,7 +68,7 @@ class AssertBuilder
         return $this->sensitive;
     }
 
-    public function expressionGet()
+    public function getValue()
     {
         return $this->value;
     }
@@ -116,12 +117,12 @@ class AssertBuilder
 
     public function get()
     {
-        return !$this->expressionHasErrors() ? $this->expressionGet() : ($this->parent ? $this->parent->get() : null);
+        return !$this->expressionHasErrors() ? $this->getValue() : ($this->parent ? $this->parent->get() : null);
     }
 
     public function getOriginal()
     {
-        return $this->parent ? $this->parent->getOriginal() : $this->expressionGet();
+        return $this->parent ? $this->parent->getOriginal() : $this->getValue();
     }
 
     public function validate()
@@ -195,42 +196,42 @@ class AssertBuilder
 
     public function array(): static
     {
-        return $this->assert(is_array($this->value), __FUNCTION__, __FUNCTION__);
+        return $this->assert(is_array($this->value), null, __FUNCTION__);
     }
 
     public function string(): static
     {
-        return $this->assert(is_string($this->value), __FUNCTION__, __FUNCTION__);
+        return $this->assert(is_string($this->value), null, __FUNCTION__);
     }
 
     public function boolean(): static
     {
-        return $this->assert(is_bool($this->value), __FUNCTION__, __FUNCTION__);
+        return $this->assert(is_bool($this->value), null, __FUNCTION__);
     }
 
     public function integer(): static
     {
-        return $this->assert(is_integer($this->value), __FUNCTION__, __FUNCTION__);
+        return $this->assert(is_integer($this->value), null, __FUNCTION__);
     }
 
     public function numeric(): static
     {
-        return $this->assert(is_numeric($this->value), __FUNCTION__, __FUNCTION__);
+        return $this->assert(is_numeric($this->value), null, __FUNCTION__);
     }
 
     public function float(): static
     {
-        return $this->assert(is_float($this->value), __FUNCTION__, __FUNCTION__);
+        return $this->assert(is_float($this->value), null, __FUNCTION__);
     }
 
     public function null(): static
     {
-        return $this->assert(is_null($this->value), __FUNCTION__, __FUNCTION__);
+        return $this->assert(is_null($this->value), null, __FUNCTION__);
     }
 
     public function req(): static
     {
-        return $this->assert(!is_null($this->value), __FUNCTION__, __FUNCTION__);
+        return $this->assert(!is_null($this->value), null, __FUNCTION__);
     }
 
     public function gt($x, ?string $message = null): static
@@ -285,37 +286,37 @@ class AssertBuilder
 
     public function date(): static
     {
-        return $this->assert($this->value instanceof DateTimeInterface, __FUNCTION__, __FUNCTION__);
+        return $this->assert($this->value instanceof DateTimeInterface, null, __FUNCTION__);
     }
 
     public function email(): static
     {
-        return $this->assert(filter_var($this->value, FILTER_VALIDATE_EMAIL), __FUNCTION__, __FUNCTION__);
+        return $this->assert(filter_var($this->value, FILTER_VALIDATE_EMAIL), null, __FUNCTION__);
     }
 
     public function ip(): static
     {
-        return $this->assert(filter_var($this->value, FILTER_VALIDATE_IP), __FUNCTION__, __FUNCTION__);
+        return $this->assert(filter_var($this->value, FILTER_VALIDATE_IP), null, __FUNCTION__);
     }
 
     public function ipv4(): static
     {
-        return $this->assert(filter_var($this->value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4), __FUNCTION__, __FUNCTION__);
+        return $this->assert(filter_var($this->value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4), null, __FUNCTION__);
     }
 
     public function ipv6(): static
     {
-        return $this->assert(filter_var($this->value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6), __FUNCTION__, __FUNCTION__);
+        return $this->assert(filter_var($this->value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6), null, __FUNCTION__);
     }
 
     public function domain(): static
     {
-        return $this->assert(filter_var($this->value, FILTER_VALIDATE_DOMAIN), __FUNCTION__, __FUNCTION__);
+        return $this->assert(filter_var($this->value, FILTER_VALIDATE_DOMAIN), null, __FUNCTION__);
     }
 
     public function url(): static
     {
-        return $this->assert(filter_var($this->value, FILTER_VALIDATE_URL), __FUNCTION__, __FUNCTION__);
+        return $this->assert(filter_var($this->value, FILTER_VALIDATE_URL), null, __FUNCTION__);
     }
 
     public function pattern(string $pattern, string $message): static
@@ -325,40 +326,48 @@ class AssertBuilder
 
     public function digits(): static
     {
-        return $this->pattern('/^[0-9]+$/', __FUNCTION__, __FUNCTION__);
+        return $this->pattern('/^[0-9]+$/', null, __FUNCTION__);
     }
 
     public function alpha(string $including = ''): static
     {
-        return $this->pattern("/^[a-zA-Z$including ]+$/", __FUNCTION__, __FUNCTION__);
+        return $this->pattern("/^[a-zA-Z$including ]+$/", null, __FUNCTION__);
     }
 
     public function alphanumeric(string $including = ''): static
     {
-        return $this->pattern("/^[a-zA-Z0-9$including ]+$/", __FUNCTION__, __FUNCTION__);
+        return $this->pattern("/^[a-zA-Z0-9$including ]+$/", null, __FUNCTION__);
     }
 
     public function currency(): static
     {
         static $currencies = ['AED', 'AFN', 'ALL', 'AMD', 'ANG', 'AOA', 'ARS', 'AUD', 'AWG', 'AZN', 'BAM', 'BBD', 'BDT', 'BGN', 'BHD', 'BIF', 'BMD', 'BND', 'BOB', 'BRL', 'BSD', 'BTN', 'BWP', 'BYR', 'BZD', 'CAD', 'CDF', 'CHF', 'CLP', 'CNY', 'COP', 'CRC', 'CUC', 'CUP', 'CVE', 'CZK', 'DJF', 'DKK', 'DOP', 'DZD', 'EGP', 'ERN', 'ETB', 'EUR', 'FJD', 'FKP', 'GBP', 'GEL', 'GHS', 'GIP', 'GMD', 'GNF', 'GTQ', 'GYD', 'HKD', 'HNL', 'HRK', 'HTG', 'HUF', 'IDR', 'ILS', 'INR', 'IQD', 'IRR', 'ISK', 'JMD', 'JOD', 'JPY', 'KES', 'KGS', 'KHR', 'KMF', 'KPW', 'KRW', 'KWD', 'KYD', 'KZT', 'LAK', 'LBP', 'LKR', 'LRD', 'LSL', 'LYD', 'MAD', 'MDL', 'MGA', 'MKD', 'MMK', 'MNT', 'MOP', 'MRO', 'MUR', 'MVR', 'MWK', 'MXN', 'MYR', 'MZN', 'NAD', 'NGN', 'NIO', 'NOK', 'NPR', 'NZD', 'OMR', 'PAB', 'PEN', 'PGK', 'PHP', 'PKR', 'PLN', 'PYG', 'QAR', 'RON', 'RSD', 'RUB', 'RWF', 'SAR', 'SBD', 'SCR', 'SDG', 'SEK', 'SGD', 'SHP', 'SLL', 'SOS', 'SRD', 'SSP', 'STD', 'SYP', 'SZL', 'THB', 'TJS', 'TMT', 'TND', 'TOP', 'TRY', 'TTD', 'TWD', 'TZS', 'UAH', 'UGX', 'USD', 'UYU', 'UZS', 'VEF', 'VND', 'VUV', 'WST', 'XAF', 'XCD', 'XOF', 'XPF', 'YER', 'ZAR', 'ZMW'];
-        return $this->assert(array_search($this->value, $currencies) !== false, __FUNCTION__, __FUNCTION__);
+        return $this->assert(array_search($this->value, $currencies) !== false, null, __FUNCTION__);
     }
 
     public function country2(): static
     {
         static $countries = ['AF', 'AX', 'AL', 'DZ', 'AS', 'AD', 'AO', 'AI', 'AQ', 'AG', 'AR', 'AM', 'AW', 'AU', 'AT', 'AZ', 'BS', 'BH', 'BD', 'BB', 'BY', 'BE', 'BZ', 'BJ', 'BM', 'BT', 'BO', 'BQ', 'BA', 'BW', 'BV', 'BR', 'IO', 'BN', 'BG', 'BF', 'BI', 'CV', 'KH', 'CM', 'CA', 'KY', 'CF', 'TD', 'CL', 'CN', 'CX', 'CC', 'CO', 'KM', 'CG', 'CD', 'CK', 'CR', 'CI', 'HR', 'CU', 'CW', 'CY', 'CZ', 'DK', 'DJ', 'DM', 'DO', 'EC', 'EG', 'SV', 'GQ', 'ER', 'EE', 'ET', 'SZ', 'FK', 'FO', 'FJ', 'FI', 'FR', 'GF', 'PF', 'TF', 'GA', 'GM', 'GE', 'DE', 'GH', 'GI', 'GR', 'GL', 'GD', 'GP', 'GU', 'GT', 'GG', 'GN', 'GW', 'GY', 'HT', 'HM', 'VA', 'HN', 'HK', 'HU', 'IS', 'IN', 'ID', 'IR', 'IQ', 'IE', 'IM', 'IL', 'IT', 'JM', 'JP', 'JE', 'JO', 'KZ', 'KE', 'KI', 'KP', 'KR', 'KW', 'KG', 'LA', 'LV', 'LB', 'LS', 'LR', 'LY', 'LI', 'LT', 'LU', 'MO', 'MK', 'MG', 'MW', 'MY', 'MV', 'ML', 'MT', 'MH', 'MQ', 'MR', 'MU', 'YT', 'MX', 'FM', 'MD', 'MC', 'MN', 'ME', 'MS', 'MA', 'MZ', 'MM', 'NA', 'NR', 'NP', 'NL', 'NC', 'NZ', 'NI', 'NE', 'NG', 'NU', 'NF', 'MP', 'NO', 'OM', 'PK', 'PW', 'PS', 'PA', 'PG', 'PY', 'PE', 'PH', 'PN', 'PL', 'PT', 'PR', 'QA', 'RE', 'RO', 'RU', 'RW', 'BL', 'SH', 'KN', 'LC', 'MF', 'PM', 'VC', 'WS', 'SM', 'ST', 'SA', 'SN', 'RS', 'SC', 'SL', 'SG', 'SX', 'SK', 'SI', 'SB', 'SO', 'ZA', 'GS', 'SS', 'ES', 'LK', 'SD', 'SR', 'SJ', 'SE', 'CH', 'SY', 'TW', 'TJ', 'TZ', 'TH', 'TL', 'TG', 'TK', 'TO', 'TT', 'TN', 'TR', 'TM', 'TC', 'TV', 'UG', 'UA', 'AE', 'GB', 'US', 'UM', 'UY', 'UZ', 'VU', 'VE', 'VN', 'VG', 'VI', 'WF', 'EH', 'YE', 'ZM', 'ZW'];
-        return $this->assert(array_search($this->value, $countries) !== false, __FUNCTION__, __FUNCTION__);
+        return $this->assert(array_search($this->value, $countries) !== false, null, __FUNCTION__);
     }
 
     public function country3(): static
     {
         static $countries = ['AFG', 'ALA', 'ALB', 'DZA', 'ASM', 'AND', 'AGO', 'AIA', 'ATA', 'ATG', 'ARG', 'ARM', 'ABW', 'AUS', 'AUT', 'AZE', 'BHS', 'BHR', 'BGD', 'BRB', 'BLR', 'BEL', 'BLZ', 'BEN', 'BMU', 'BTN', 'BOL', 'BES', 'BIH', 'BWA', 'BVT', 'BRA', 'IOT', 'BRN', 'BGR', 'BFA', 'BDI', 'CPV', 'KHM', 'CMR', 'CAN', 'CYM', 'CAF', 'TCD', 'CHL', 'CHN', 'CXR', 'CCK', 'COL', 'COM', 'COG', 'COD', 'COK', 'CRI', 'CIV', 'HRV', 'CUB', 'CUW', 'CYP', 'CZE', 'DNK', 'DJI', 'DMA', 'DOM', 'ECU', 'EGY', 'SLV', 'GNQ', 'ERI', 'EST', 'ETH', 'SWZ', 'FLK', 'FRO', 'FJI', 'FIN', 'FRA', 'GUF', 'PYF', 'ATF', 'GAB', 'GMB', 'GEO', 'DEU', 'GHA', 'GIB', 'GRC', 'GRL', 'GRD', 'GLP', 'GUM', 'GTM', 'GGY', 'GIN', 'GNB', 'GUY', 'HTI', 'HMD', 'VAT', 'HND', 'HKG', 'HUN', 'ISL', 'IND', 'IDN', 'IRN', 'IRQ', 'IRL', 'IMN', 'ISR', 'ITA', 'JAM', 'JPN', 'JEY', 'JOR', 'KAZ', 'KEN', 'KIR', 'PRK', 'KOR', 'KWT', 'KGZ', 'LAO', 'LVA', 'LBN', 'LSO', 'LBR', 'LBY', 'LIE', 'LTU', 'LUX', 'MAC', 'MKD', 'MDG', 'MWI', 'MYS', 'MDV', 'MLI', 'MLT', 'MHL', 'MTQ', 'MRT', 'MUS', 'MYT', 'MEX', 'FSM', 'MDA', 'MCO', 'MNG', 'MNE', 'MSR', 'MAR', 'MOZ', 'MMR', 'NAM', 'NRU', 'NPL', 'NLD', 'NCL', 'NZL', 'NIC', 'NER', 'NGA', 'NIU', 'NFK', 'MNP', 'NOR', 'OMN', 'PAK', 'PLW', 'PSE', 'PAN', 'PNG', 'PRY', 'PER', 'PHL', 'PCN', 'POL', 'PRT', 'PRI', 'QAT', 'REU', 'ROU', 'RUS', 'RWA', 'BLM', 'SHN', 'KNA', 'LCA', 'MAF', 'SPM', 'VCT', 'WSM', 'SMR', 'STP', 'SAU', 'SEN', 'SRB', 'SYC', 'SLE', 'SGP', 'SXM', 'SVK', 'SVN', 'SLB', 'SOM', 'ZAF', 'SGS', 'SSD', 'ESP', 'LKA', 'SDN', 'SUR', 'SJM', 'SWE', 'CHE', 'SYR', 'TWN', 'TJK', 'TZA', 'THA', 'TLS', 'TGO', 'TKL', 'TON', 'TTO', 'TUN', 'TUR', 'TKM', 'TCA', 'TUV', 'UGA', 'UKR', 'ARE', 'GBR', 'USA', 'UMI', 'URY', 'UZB', 'VUT', 'VEN', 'VNM', 'VGB', 'VIR', 'WLF', 'ESH', 'YEM', 'ZMB', 'ZWE'];
-        return $this->assert(array_search($this->value, $countries) !== false, __FUNCTION__, __FUNCTION__);
+        return $this->assert(array_search($this->value, $countries) !== false, null, __FUNCTION__);
     }
 
     public function decimal(): static
     {
         return $this->pattern('/^[0-9]*(\.[0-9]+)?$/', __FUNCTION__);
+    }
+
+    public function cardNumber() : static {
+        if (!is_numeric($this->value)) {
+            return $this->assert(false, null, __FUNCTION__);
+        }
+
+        return $this->assert(Luhn::check($this->value), null, __FUNCTION__);
     }
 
     // @NOTE:
@@ -369,12 +378,12 @@ class AssertBuilder
         $raw = preg_replace('/[^0-9]/', '', strval($this->value));
         $raw = str_pad($raw, 11, '0', STR_PAD_LEFT);
 
-        if (strlen($raw) != 11) return $this->assert(false, __FUNCTION__, __FUNCTION__);
+        if (strlen($raw) != 11) return $this->assert(false, null, __FUNCTION__);
 
         $split = str_split($raw);
         $initial = $split[0];
 
-        if (array_reduce($split, fn ($prev, $curr) => $curr != $initial ? $curr : $prev, $initial) == $initial) return $this->assert(false, __FUNCTION__, __FUNCTION__);
+        if (array_reduce($split, fn ($prev, $curr) => $curr != $initial ? $curr : $prev, $initial) == $initial) return $this->assert(false, null, __FUNCTION__);
 
         for ($t = 9; $t < 11; $t++) {
             for ($d = 0, $c = 0; $c < $t; $c++) {
@@ -384,7 +393,7 @@ class AssertBuilder
             $d = ((10 * $d) % 11) % 10;
 
             if ($raw[$c] != $d) {
-                return $this->assert(false, __FUNCTION__, __FUNCTION__);
+                return $this->assert(false, null, __FUNCTION__);
             }
         }
 
@@ -401,12 +410,12 @@ class AssertBuilder
         $raw = preg_replace('/[^0-9]/', '', strval($this->value));
         $raw = str_pad($raw, 14, '0', STR_PAD_LEFT);
 
-        if (strlen($raw) != 14) return $this->assert(false, __FUNCTION__, __FUNCTION__);
+        if (strlen($raw) != 14) return $this->assert(false, null, __FUNCTION__);
 
         $split = str_split($raw);
         $initial = $split[0];
 
-        if (array_reduce($split, fn ($prev, $curr) => $curr != $initial ? $curr : $prev, $initial) == $initial) return $this->assert(false, __FUNCTION__, __FUNCTION__);
+        if (array_reduce($split, fn ($prev, $curr) => $curr != $initial ? $curr : $prev, $initial) == $initial) return $this->assert(false, null, __FUNCTION__);
 
         $j = 5;
         $k = 6;
@@ -430,7 +439,7 @@ class AssertBuilder
         $digito1 = $soma1 % 11 < 2 ? 0 : 11 - $soma1 % 11;
         $digito2 = $soma2 % 11 < 2 ? 0 : 11 - $soma2 % 11;
 
-        if (!(($raw[12] == $digito1) and ($raw[13] == $digito2))) return $this->assert(false, __FUNCTION__, __FUNCTION__);
+        if (!(($raw[12] == $digito1) and ($raw[13] == $digito2))) return $this->assert(false, null, __FUNCTION__);
 
         $p1 = substr($raw, 0, 2);
         $p2 = substr($raw, 2, 3);
@@ -439,6 +448,11 @@ class AssertBuilder
         $p5 = substr($raw, 12, 2);
 
         return $this->clone($format ? "$p1.$p2.$p3/$p4-$p5" : $raw);
+    }
+
+    public function asCardNumber(): static
+    {
+        return $this->asDigitsOnly()->assert(Luhn::check())
     }
 
     public function asTrim(): static
@@ -488,6 +502,11 @@ class AssertBuilder
     public function asLimit(int $size): static
     {
         return $this->asTruncate($size, '');
+    }
+
+    public function asCardNumber(int $size): static
+    {
+        return $this->asDigitsOnly()->cardNumber();
     }
 
     //
