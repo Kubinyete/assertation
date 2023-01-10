@@ -359,7 +359,7 @@ class AssertBuilder
 
     public function decimal(): self
     {
-        return $this->pattern('/^[0-9]*(\.[0-9]+)?$/', __FUNCTION__);
+        return $this->pattern('/^(\.[0-9]+)|[0-9]*(\.[0-9]+)?$/', __FUNCTION__);
     }
 
     public function cardNumber(): self
