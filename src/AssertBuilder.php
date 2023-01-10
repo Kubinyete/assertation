@@ -319,24 +319,24 @@ class AssertBuilder
         return $this->assert(filter_var($this->value, FILTER_VALIDATE_URL), null, __FUNCTION__);
     }
 
-    public function pattern(string $pattern, string $message): static
+    protected function pattern(string $pattern, string $ruleNmae): static
     {
-        return $this->assert(boolval(preg_match($pattern, $this->value)), $message, __FUNCTION__);
+        return $this->assert(boolval(preg_match($pattern, $this->value)), null, $ruleName);
     }
 
     public function digits(): static
     {
-        return $this->pattern('/^[0-9]+$/', null, __FUNCTION__);
+        return $this->pattern('/^[0-9]+$/', __FUNCTION__);
     }
 
     public function alpha(string $including = ''): static
     {
-        return $this->pattern("/^[a-zA-Z$including ]+$/", null, __FUNCTION__);
+        return $this->pattern("/^[a-zA-Z$including ]+$/", __FUNCTION__);
     }
 
     public function alphanumeric(string $including = ''): static
     {
-        return $this->pattern("/^[a-zA-Z0-9$including ]+$/", null, __FUNCTION__);
+        return $this->pattern("/^[a-zA-Z0-9$including ]+$/", __FUNCTION__);
     }
 
     public function currency(): static
