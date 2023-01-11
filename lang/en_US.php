@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'validate' => 'Validation check failed',
+
     'assert' => 'Assertion failed',
     'eq' => "Expected to be equals to {x}",
     'seq' => "Expected to be equals to {x}",

@@ -22,11 +22,6 @@ class Assert
         $this->tr = $translator;
     }
 
-    public function getTranslator(): TranslatorInterface
-    {
-        return $this->tr;
-    }
-
     public function shouldThrowEarly(): bool
     {
         return $this->throwEarly;
@@ -53,7 +48,10 @@ class Assert
         return self::$instance ?? (self::$instance = new self());
     }
 
-    //
+    public static function setLanguage(string $lang): void
+    {
+        self::getInstance()->setTranslator(new LangTranslator($lang));
+    }
 
     public static function value($value, ?string $attributeName = null, bool $isValueSensitive = false): AssertBuilder
     {

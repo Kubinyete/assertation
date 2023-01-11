@@ -9,15 +9,10 @@ class ValidationException extends AssertException
 {
     protected array $errors;
 
-    public function __construct(array $errors)
+    public function __construct(string $message, array $errors)
     {
         $this->errors = $errors;
-
-        parent::__construct(
-            'Validation check failed, please check the following error list:' .
-                PHP_EOL .
-                $this->getErrorsSimplifiedString()
-        );
+        parent::__construct($message . PHP_EOL . $this->getErrorsSimplifiedString());
     }
 
     protected function getErrorsString(): string

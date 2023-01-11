@@ -136,7 +136,8 @@ class AssertBuilder
             $errors = $this->errors();
             $attr = $this->attribute ?? 'general';
 
-            throw new ValidationException([$attr => $errors]);
+            $message = $this->context->translate(__FUNCTION__) ?? 'Validation check failed';
+            throw new ValidationException($message, [$attr => $errors]);
         }
 
         return $this;
@@ -476,6 +477,8 @@ class AssertBuilder
 
         if ($dataSize > $size) {
             $size -= $endSize;
+        } else {
+            $end = '';
         }
 
         return $this->clone(substr($data, 0, $size) . $end);
@@ -490,7 +493,7 @@ class AssertBuilder
     {
         $data = str_replace($decimalSymbol, '.', strval($this->value));
 
-        if (!preg_match('/^(\.[0-9]+)|[0-9]*(\.[0-9]+)?$/', $data)) {
+        if (!preg_match('/^(\.[0-9]+)|[0-9]+(\.[0-9]+)?$/', $data)) {
             return $this->assert(false, null, __FUNCTION__);
         }
 
