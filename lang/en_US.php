@@ -36,9 +36,9 @@ return [
     'country2' => "Expected to an alpha 2 country code",
     'country3' => "Expected to an alpha 3 country code",
     'currency' => "Expected to be a valid alpha3 currency code",
-    'decimal' => "Expected to be a decimal number",
-    'cardNumber' => "Expected to be a valid card number",
 
     'asCpf' => "Expected to be a valid CPF document number",
     'asCnpj' => "Expected to be a valid CNPJ document number",
+    'asDecimal' => "Expected to be a decimal number",
+    'asCardNumber' => "Expected to be a valid card number",
 ];

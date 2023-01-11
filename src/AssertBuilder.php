@@ -10,6 +10,11 @@ use UnexpectedValueException;
 
 class AssertBuilder
 {
+    protected const RULE_OR = '|';
+    protected const RULE_AND = ';';
+    protected const RULE_ARG = ',';
+    protected const RULE_ATTR_PREFIX_SENSITIVE = '#';
+
     protected Assert $context;
     protected $value;
     protected ?string $attribute;
@@ -151,8 +156,6 @@ class AssertBuilder
         $pre = $this->attribute ? "{$this->attribute}: " : '';
         $message ??= $ruleName;
 
-        // dump("$ruleName($this->attribute)", $cond);
-
         if (!$cond) {
             $message = $pre . $this->context->translate($message, array_merge([
                 'rule' => $ruleName,
@@ -172,6 +175,71 @@ class AssertBuilder
         $this->checks[] = [$cond, $message];
         return $this;
     }
+
+    //
+
+    public function rules(string $rules): self
+    {
+        $builder = $this;
+        $contexts = explode(self::RULE_OR, $rules);
+        $context = array_shift($contexts);
+
+        do {
+            $rules = explode(self::RULE_AND, $context);
+
+            foreach ($rules as $rule) {
+                $pieces = explode(self::RULE_ARG, $rule, 2);
+                $rule = array_shift($pieces);
+                $args = $pieces;
+
+                $builder = $rule ? call_user_func_array([$builder, $rule], $args) : $builder;
+            }
+        } while (($context = array_shift($contexts)) && ($builder = $builder->or()));
+
+        return $builder;
+    }
+
+    public function assocRules(array $rules): self
+    {
+        if (!is_array($this->value)) {
+            throw new UnexpectedValueException("Cannot apply assoc rules to a value that is not an array.");
+        }
+
+        foreach ($rules as $attr => $rules) {
+            $sensitive = 0;
+            $attr = preg_replace('/^' . self::RULE_ATTR_PREFIX_SENSITIVE . '/', '', $attr, 1, $sensitive);
+
+            $currValue = ArrayUtil::get($attr, $this->value);
+
+            $builder = $this->applyAssocRule($attr, $currValue, $rules, (bool)$sensitive);
+            $changedValue = $builder->validate()->getOriginal();
+
+            if ($changedValue !== $currValue) {
+                ArrayUtil::set($attr, $this->value, $changedValue);
+            }
+        }
+
+        return $this;
+    }
+
+    protected function applyAssocRule(string $attr, $value, $rules, bool $sensitive = false): self
+    {
+        $builder = $this->clone($value, $this->parent, $attr, (bool)$sensitive);
+
+        if (!is_array($rules)) {
+            $rules = [strval($rules)];
+        }
+
+        do {
+            $rule = array_shift($rules);
+            $builder = $builder->rules($rule);
+        } while ($rules && ($builder = $builder->or()));
+
+        return $builder;
+    }
+
+    // @NOTE:
+    // Rules...
 
     public function eq($x, ?string $message = null): self
     {
@@ -204,14 +272,29 @@ class AssertBuilder
         return $this->assert(is_string($this->value), null, __FUNCTION__);
     }
 
+    public function str(): self
+    {
+        return $this->string();
+    }
+
     public function boolean(): self
     {
         return $this->assert(is_bool($this->value), null, __FUNCTION__);
     }
 
+    public function bool(): self
+    {
+        return $this->boolean();
+    }
+
     public function integer(): self
     {
         return $this->assert(is_integer($this->value), null, __FUNCTION__);
+    }
+
+    public function int(): self
+    {
+        return $this->integer();
     }
 
     public function numeric(): self
@@ -357,24 +440,79 @@ class AssertBuilder
         return $this->assert(array_search($this->value, $countries) !== false, null, __FUNCTION__);
     }
 
-    public function decimal(): self
+    // @NOTE:
+    // Modifiers...
+
+    public function asTrim(): self
     {
-        return $this->pattern('/^(\.[0-9]+)|[0-9]*(\.[0-9]+)?$/', __FUNCTION__);
+        return $this->clone(trim(strval($this->value)));
     }
 
-    public function cardNumber(): self
+    public function asUppercase(): self
     {
-        $length = strlen($this->value);
+        return $this->clone(mb_strtoupper(strval($this->value)));
+    }
 
-        if (!is_numeric($this->value) || $length < 8 || $length > 19) {
+    public function asLowercase(): self
+    {
+        return $this->clone(mb_strtolower(strval($this->value)));
+    }
+
+    public function asExtract(string $charClass): self
+    {
+        return $this->clone(preg_replace("/[^$charClass]/", '', strval($this->value)));
+    }
+
+    public function asDigits(): self
+    {
+        return $this->asExtract('0-9');
+    }
+
+    public function asTruncate(int $size, string $end = '...'): self
+    {
+        $data = strval($this->value);
+        $dataSize = strlen($data);
+        $endSize = strlen($end);
+
+        if ($dataSize > $size) {
+            $size -= $endSize;
+        }
+
+        return $this->clone(substr($data, 0, $size) . $end);
+    }
+
+    public function asLimit(int $size): self
+    {
+        return $this->asTruncate($size, '');
+    }
+
+    public function asDecimal(array $decimalSymbol = [',', '.']): self
+    {
+        $data = str_replace($decimalSymbol, '.', strval($this->value));
+
+        if (!preg_match('/^(\.[0-9]+)|[0-9]*(\.[0-9]+)?$/', $data)) {
             return $this->assert(false, null, __FUNCTION__);
         }
 
-        return $this->assert(Luhn::check($this->value), null, __FUNCTION__);
+        return $this->clone($data);
     }
 
-    // @NOTE:
-    // Modifiers
+    public function asCardNumber(): self
+    {
+        $data = trim(strval($this->value));
+
+        if (!is_numeric($data)) {
+            return $this->assert(false, null, __FUNCTION__);
+        }
+
+        $data = str_replace('/[^0-9]/', '', $data);
+
+        if (!($length = strlen($data)) || $length < 8 || $length > 19 || !Luhn::check($data)) {
+            return $this->assert(false, null, __FUNCTION__);
+        }
+
+        return $this->clone($data);
+    }
 
     public function asCpf(bool $format = true): self
     {
@@ -451,122 +589,5 @@ class AssertBuilder
         $p5 = substr($raw, 12, 2);
 
         return $this->clone($format ? "$p1.$p2.$p3/$p4-$p5" : $raw);
-    }
-
-    public function asTrim(): self
-    {
-        return $this->clone(trim(strval($this->value)));
-    }
-
-    public function asUppercase(): self
-    {
-        return $this->clone(mb_strtoupper(strval($this->value)));
-    }
-
-    public function asLowercase(): self
-    {
-        return $this->clone(mb_strtolower(strval($this->value)));
-    }
-
-    public function asDecimal(array $decimalSymbol = [',', '.']): self
-    {
-        $data = str_replace($decimalSymbol, '.', strval($this->value));
-        return $this->clone($data)->decimal();
-    }
-
-    public function asExtract(string $charClass): self
-    {
-        return $this->clone(preg_replace("/[^$charClass]/", '', strval($this->value)));
-    }
-
-    public function asDigitsOnly(): self
-    {
-        return $this->asExtract('0-9');
-    }
-
-    public function asTruncate(int $size, string $end = '...'): self
-    {
-        $data = strval($this->value);
-        $dataSize = strlen($data);
-        $endSize = strlen($end);
-
-        if ($dataSize > $size) {
-            $size -= $endSize;
-        }
-
-        return $this->clone(substr($data, 0, $size) . $end);
-    }
-
-    public function asLimit(int $size): self
-    {
-        return $this->asTruncate($size, '');
-    }
-
-    public function asCardNumber(): self
-    {
-        return $this->asDigitsOnly()->cardNumber();
-    }
-
-    //
-
-    public function rules(string $rules): self
-    {
-        $builder = $this;
-        $contexts = explode('|', $rules);
-        $context = array_shift($contexts);
-
-        do {
-            $rules = explode('.', $context);
-
-            foreach ($rules as $rule) {
-                $pieces = explode(':', $rule, 2);
-                $rule = array_shift($pieces);
-                $args = array_shift($pieces);
-
-                $args = $args ? explode(',', $args) : [];
-                $builder = $rule ? call_user_func_array([$builder, $rule], $args) : $builder;
-            }
-        } while (($context = array_shift($contexts)) && ($builder = $builder->or()));
-
-        return $builder;
-    }
-
-    public function assocRules(array $rules): self
-    {
-        if (!is_array($this->value)) {
-            throw new UnexpectedValueException("Cannot apply assoc rules to a value that is not an array.");
-        }
-
-        foreach ($rules as $attr => $rules) {
-            $sensitive = 0;
-            $attr = preg_replace('/^#/', '', $attr, 1, $sensitive);
-
-            $currValue = ArrayUtil::get($attr, $this->value);
-
-            $builder = $this->applyAssocRule($attr, $currValue, $rules, (bool)$sensitive);
-            $changedValue = $builder->validate()->getOriginal();
-
-            if ($changedValue !== $currValue) {
-                ArrayUtil::set($attr, $this->value, $changedValue);
-            }
-        }
-
-        return $this;
-    }
-
-    protected function applyAssocRule(string $attr, $value, $rules, bool $sensitive = false): self
-    {
-        $builder = $this->clone($value, $this->parent, $attr, (bool)$sensitive);
-
-        if (!is_array($rules)) {
-            $rules = [strval($rules)];
-        }
-
-        do {
-            $rule = array_shift($rules);
-            $builder = $builder->rules($rule);
-        } while ($rules && ($builder = $builder->or()));
-
-        return $builder;
     }
 }
