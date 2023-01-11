@@ -364,7 +364,9 @@ class AssertBuilder
 
     public function cardNumber(): self
     {
-        if (!is_numeric($this->value)) {
+        $length = strlen($this->value);
+
+        if (!is_numeric($this->value) || $length < 8 || $length > 19) {
             return $this->assert(false, null, __FUNCTION__);
         }
 
