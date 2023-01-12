@@ -189,7 +189,7 @@ class AssertBuilder
             $rules = explode(self::RULE_AND, $context);
 
             foreach ($rules as $rule) {
-                $pieces = explode(self::RULE_ARG, $rule, 2);
+                $pieces = explode(self::RULE_ARG, $rule);
                 $rule = array_shift($pieces);
                 $args = $pieces;
 

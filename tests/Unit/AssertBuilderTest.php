@@ -71,4 +71,14 @@ class AssertBuilderTest extends TestCase
         $this->expectExceptionMessageMatches('/Expected to be an integer/');
         $builder->validate();
     }
+
+    public function testRulesCanPassArgs()
+    {
+        $builder = Assert::value('  abc  ')->rules('asTrim;lbetween,3,3|eq,1');
+        $this->assertTrue($builder->valid());
+        $this->assertEmpty($builder->errors());
+        $this->assertEquals('abc', $builder->get());
+
+        $builder->validate();
+    }
 }
