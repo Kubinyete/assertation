@@ -9,7 +9,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Kubinyete\\Assertation\\Tests": "tests/"
+            "Kubinyete\\Assertation\\Tests\\": "tests/"
         }
     },
     "authors": [
@@ -20,6 +20,7 @@
     ],
     "require-dev": {
         "symfony/var-dumper": "^5.4",
-        "phpunit/phpunit": "^9.5"
+        "phpunit/phpunit": "^9.5",
+        "evert/phpdoc-md": "^0.2.0"
     }
 }

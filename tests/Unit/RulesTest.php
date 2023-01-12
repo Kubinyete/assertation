@@ -58,4 +58,18 @@ class RulesTest extends TestCase
         $this->assertTrue(Assert::value('123.12')->asDecimal()->valid());
         $this->assertTrue(Assert::value('.12')->asDecimal()->valid());
     }
+
+    public function testCardNumber()
+    {
+        $this->assertFalse(Assert::value('')->asCardNumber()->valid());
+        $this->assertFalse(Assert::value('asdf')->asCardNumber()->valid());
+        $this->assertFalse(Assert::value('1111 111')->asCardNumber()->valid());
+        $this->assertFalse(Assert::value('1234 5678 9101 5678')->asCardNumber()->valid());
+        $this->assertFalse(Assert::value('5518.5796.6764.1838')->asCardNumber()->valid());
+
+        $this->assertTrue(Assert::value('5518579667641838')->asCardNumber()->valid());
+        $this->assertTrue(Assert::value('5518 5796 6764 1838')->asCardNumber()->valid());
+        $this->assertTrue(Assert::value('4929 7835 0363 3365')->asCardNumber()->valid());
+        $this->assertTrue(Assert::value('343908639595537')->asCardNumber()->valid());
+    }
 }

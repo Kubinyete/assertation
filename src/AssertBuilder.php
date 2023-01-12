@@ -502,13 +502,11 @@ class AssertBuilder
 
     public function asCardNumber(): self
     {
-        $data = trim(strval($this->value));
+        $data = preg_replace('/ +/', '', strval($this->value));
 
         if (!is_numeric($data)) {
             return $this->assert(false, null, __FUNCTION__);
         }
-
-        $data = str_replace('/[^0-9]/', '', $data);
 
         if (!($length = strlen($data)) || $length < 8 || $length > 19 || !Luhn::check($data)) {
             return $this->assert(false, null, __FUNCTION__);
