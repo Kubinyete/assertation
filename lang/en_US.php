@@ -43,4 +43,6 @@ return [
     'asCnpj' => "Expected to be a valid CNPJ document number",
     'asDecimal' => "Expected to be a decimal number",
     'asCardNumber' => "Expected to be a valid card number",
+    'asJsonDecode' => "Expected to be a JSON string",
+    'asJsonEncode' => "Could not encode value to a JSON string",
 ];

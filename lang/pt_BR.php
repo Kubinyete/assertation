@@ -43,4 +43,6 @@ return [
     'asCnpj' => "Deve ser um número de documento CNPJ válido",
     'asDecimal' => "Deve ser um número decimal válido",
     'asCardNumber' => "Deve ser um número de cartão válido",
+    'asJsonDecode' => "Deve ser um texto JSON",
+    'asJsonEncode' => "Não foi possível converter o valor para JSON",
 ];

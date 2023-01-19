@@ -489,6 +489,53 @@ class AssertBuilder
         return $this->asTruncate($size, '');
     }
 
+    public function asJsonEncode(int $flags = 0, int $depth = 512): self
+    {
+        $data = json_encode($this->value, $flags, $depth);
+
+        if (json_last_error() != JSON_ERROR_NONE) {
+            return $this->assert(false, null, __FUNCTION__);
+        }
+
+        return $this->clone($data);
+    }
+
+    public function asJsonDecode(bool $assoc = true, int $flags = 0, int $depth = 512): self
+    {
+        $data = json_decode(strval($this->value), $assoc, $depth, $flags);
+
+        if (json_last_error() != JSON_ERROR_NONE) {
+            return $this->assert(false, null, __FUNCTION__);
+        }
+
+        return $this->clone($data);
+    }
+
+    public function asRound(int $precision = 0, int $mode = PHP_ROUND_HALF_UP): self
+    {
+        return $this->clone(round(floatval($this->value), $precision, $mode));
+    }
+
+    public function asFloor(): self
+    {
+        return $this->clone(floor(floatval($this->value)));
+    }
+
+    public function asCeil(): self
+    {
+        return $this->clone(ceil(floatval($this->value)));
+    }
+
+    public function asReplace(string $x, string $y): self
+    {
+        return $this->clone(str_replace($x, $y, strval($this->value)));
+    }
+
+    public function asPregReplace(string $x, string $y, int $limit = -1): self
+    {
+        return $this->clone(preg_replace($x, $y, strval($this->value), $limit));
+    }
+
     public function asDecimal(array $decimalSymbol = [',', '.']): self
     {
         $data = str_replace($decimalSymbol, '.', strval($this->value));
