@@ -3,10 +3,10 @@
 namespace Kubinyete\Assertation;
 
 use DateTimeInterface;
-use Kubinyete\Assertation\Exception\ValidationException;
-use Kubinyete\Assertation\Util\ArrayUtil;
-use Kubinyete\Assertation\Util\Luhn;
 use UnexpectedValueException;
+use Kubinyete\Assertation\Util\Luhn;
+use Kubinyete\Assertation\Util\ArrayUtil;
+use Kubinyete\Assertation\Exception\ValidationException;
 
 class AssertBuilder
 {
@@ -491,6 +491,10 @@ class AssertBuilder
 
     public function asJsonEncode(int $flags = 0, int $depth = 512): self
     {
+        if (!is_string($this->value)) {
+            return $this->assert(false, null, __FUNCTION__);
+        }
+
         $data = json_encode($this->value, $flags, $depth);
 
         if (json_last_error() != JSON_ERROR_NONE) {
