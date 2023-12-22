@@ -491,10 +491,6 @@ class AssertBuilder
 
     public function asJsonEncode(int $flags = 0, int $depth = 512): self
     {
-        if (!is_string($this->value)) {
-            return $this->assert(false, null, __FUNCTION__);
-        }
-
         $data = json_encode($this->value, $flags, $depth);
 
         if (json_last_error() != JSON_ERROR_NONE) {
@@ -506,6 +502,10 @@ class AssertBuilder
 
     public function asJsonDecode(bool $assoc = true, int $flags = 0, int $depth = 512): self
     {
+        if (!is_string($this->value)) {
+            return $this->assert(false, null, __FUNCTION__);
+        }
+
         $data = json_decode(strval($this->value), $assoc, $depth, $flags);
 
         if (json_last_error() != JSON_ERROR_NONE) {
